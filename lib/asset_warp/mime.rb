@@ -1,4 +1,4 @@
-module AssetWarp
+class AssetWarp
   module MIME
     WEB_SAFE_IMAGE_MAP = {
       'image/jpeg'  => 'jpg',

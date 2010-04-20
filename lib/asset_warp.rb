@@ -41,7 +41,7 @@ class AssetWarp
           end
         when 'file'
           data = File.read(asset.path)
-          mime_type_list = MIME::Types.type_for(asset.path)
+          mime_type_list = ::MIME::Types.type_for(asset.path)
           if mime_type_list.length > 0
             content_type = mime_type_list.first.to_s
           else
@@ -58,7 +58,7 @@ class AssetWarp
           [404, {'Content-Type' => 'text/plain'}, 'Not Found']
         end
         
-      rescue StandardError
+      rescue StandardError => e
         [500, {'Content-Type' => 'text/plain'}, 'Internal Server Error']
       end
     else
@@ -68,4 +68,5 @@ class AssetWarp
   
   autoload :Context,  File.dirname(__FILE__) + '/asset_warp/context'
   autoload :Blob,     File.dirname(__FILE__) + '/asset_warp/blob'
+  autoload :MIME,     File.dirname(__FILE__) + '/asset_warp/mime'
 end

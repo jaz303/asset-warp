@@ -212,7 +212,6 @@ TODO
 
   * Gem release
   * PDF thumbnail generation
-  * Refactor profiles to accept MIME-type constraints
   * Implement :only/:except rules for limiting profiles available to asset sources
   * Support loading context from file
   * Allow disabling of default profile

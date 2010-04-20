@@ -66,24 +66,32 @@ class AssetWarp
     end
     
     class Profile
-      def initialize(block)
-        @block = block
+      attr_reader :restrictions
+      
+      def initialize(block, *restrictions)
+        @block, @restrictions = block, expand_restrictions(restrictions).freeze
       end
       
       # apply profile to blob, return false if profile cannot be applied
       def call(blob)
-        @block.call(blob) if @block
-        true
-      end
-    end
-    
-    class ImageProfile < Profile
-      def call(blob)
-        if blob.web_safe_image?
-          super
+        if restrictions.empty? || restrictions.include?(blob.content_type)
+          @block.call(blob) if @block
+          true
         else
           false
         end
+      end
+      
+    private
+    
+      def expand_restrictions(restrictions)
+        restrictions.flatten.map { |r|
+          if Symbol === r
+            MIME.expand_content_class(r)
+          else
+            r
+          end
+        }.flatten
       end
     end
     
@@ -92,7 +100,7 @@ class AssetWarp
     end
     
     def image_profile(name, &block)
-      add_profile(name, ImageProfile.new(block))
+      add_profile(name, Profile.new(block, :web_safe_image))
     end
     
   private

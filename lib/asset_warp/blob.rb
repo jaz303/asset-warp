@@ -1,12 +1,5 @@
 class AssetWarp
   class Blob
-    WEB_SAFE_IMAGE_MAP = {
-      'image/jpeg'  => 'jpg',
-      'image/pjpeg' => 'jpg',
-      'image/gif'   => 'gif',
-      'image/png'   => 'png',
-    }.freeze
-    
     attr_reader :content_type
     
     def initialize(data, content_type)
@@ -15,7 +8,7 @@ class AssetWarp
     
     def extension
       if web_safe_image?
-        WEB_SAFE_IMAGE_MAP[content_type]
+        MIME::WEB_SAFE_IMAGE_MAP[content_type]
       elsif pdf?
         'pdf'
       else
@@ -34,11 +27,11 @@ class AssetWarp
     # Predicates
     
     def web_safe_image?
-      WEB_SAFE_IMAGE_MAP.key?(content_type)
+      MIME.web_safe_image?(content_type)
     end
     
     def pdf?
-      'application/pdf' == content_type
+      MIME.pdf?(content_type)
     end
     
     def content_type
