@@ -58,8 +58,7 @@ class AssetWarp
           [404, {'Content-Type' => 'text/plain'}, 'Not Found']
         end
         
-      rescue StandardError => e
-        p e
+      rescue StandardError
         [500, {'Content-Type' => 'text/plain'}, 'Internal Server Error']
       end
     else
