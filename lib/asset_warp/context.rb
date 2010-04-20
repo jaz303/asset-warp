@@ -36,7 +36,7 @@ class AssetWarp
                 if source[:target].is_a?(String)
                   url = source[:target].gsub(':id', chunks[1])
                 else
-                  url = sorce[:target].call(chunks[1], env)
+                  url = source[:target].call(chunks[1], env)
                 end
                 if url.is_a?(String) && url[0..0] == '/'
                   url = 'http://' + env['HTTP_HOST'] + url

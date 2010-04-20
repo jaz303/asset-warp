@@ -208,7 +208,6 @@ TODO
   * PDF thumbnail generation
   * Refactor profiles to accept MIME-type constraints
   * Implement :only/:except rules for limiting profiles available to asset sources
-  * Support local files in addition to URLs
   * Support loading context from file
   * Allow disabling of default profile
   * Write some tests?

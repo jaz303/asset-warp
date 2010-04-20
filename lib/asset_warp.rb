@@ -1,3 +1,4 @@
+require 'mime/types'
 require 'mini_magick'
 require 'net/http'
 require 'uri'
@@ -26,24 +27,39 @@ class AssetWarp
   def call(env)
     if resolved_asset = @context.resolve(env)
       begin
-        asset_url, profile_name = *resolved_asset
-        uri = URI.parse(asset_url)
+        asset, profile_name = *resolved_asset
+        asset = URI.parse(asset) if asset.is_a?(String)
         
-        begin
-          res = Net::HTTP.start(uri.host, uri.port) { |http| http.get(uri.path) }
-          raise unless Net::HTTPSuccess === res
-        rescue => e
-          return [502, {'Content-Type' => 'text/plain'}, 'Bad Gateway']
+        case asset.scheme
+        when 'http', 'https'
+          begin
+            res = Net::HTTP.start(asset.host, asset.port) { |http| http.get(asset.path) }
+            raise unless Net::HTTPSuccess === res
+            data, content_type = res.body, res['Content-Type']
+          rescue StandardError
+            return [502, {'Content-Type' => 'text/plain'}, 'Bad Gateway']
+          end
+        when 'file'
+          data = File.read(asset.path)
+          mime_type_list = MIME::Types.type_for(asset.path)
+          if mime_type_list.length > 0
+            content_type = mime_type_list.first.to_s
+          else
+            content_type = 'application/octet-stream'
+          end
+        else
+          raise "supported URI schemes are http, https and file"
         end
         
-        blob = Blob.new(res.body, res['Content-Type'])
-        if  @context[profile_name].call(blob)
+        blob = Blob.new(data, content_type)
+        if @context[profile_name].call(blob)
           [200, {'Content-Type' => blob.content_type}, blob.data]
         else
           [404, {'Content-Type' => 'text/plain'}, 'Not Found']
         end
         
-      rescue
+      rescue StandardError => e
+        p e
         [500, {'Content-Type' => 'text/plain'}, 'Internal Server Error']
       end
     else

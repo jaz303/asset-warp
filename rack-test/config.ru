@@ -14,6 +14,13 @@ context = AssetWarp::Context.new do |c|
   # The profile name is optional and in this case defaults to 'original'
   c.map 'img', '/images/:id', :id => /^[^\/]+$/, :default_profile => 'original'
   
+  # Maps /a/files/foo.gif/profile-name to filesystem path
+  # Note: you need to return a file:// URI
+  # This example is insecure! For example only!
+  c.map 'file', :id => /^[^\/]+$/ do |asset_id, env|
+    "file://" + File.expand_path(File.dirname(__FILE__)) + '/files/' + asset_id
+  end
+  
   # Define an image profile
   # Image profiles operate only on web-safe images
   # If they encounter any other content types they will return a 404
