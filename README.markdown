@@ -145,6 +145,13 @@ Here's the `config.ru` that made this possible:
       # The profile name is optional and in this case defaults to 'original'
       c.map 'img', '/images/:id', :id => /^[^\/]+$/, :default_profile => 'original'
   
+      # Maps /a/files/foo.gif/profile-name to filesystem path
+      # Note: you need to return a file:// URI
+      # This example is insecure! For example only!
+      c.map 'file', :id => /^[^\/]+$/ do |asset_id, env|
+        "file://" + File.expand_path(File.dirname(__FILE__)) + '/files/' + asset_id
+      end
+  
       # Define an image profile
       # Image profiles operate only on web-safe images
       # If they encounter any other content types they will return a 404
@@ -155,8 +162,7 @@ Here's the `config.ru` that made this possible:
   
       # Define a standard profile
       # Standard profiles operate on everything and, to be honest, aren't much use.
-      # A single standard profile, 'original', is used internally as a no-op for
-      # viewing the original asset
+      # A single standard profile, 'original', is used internally as a no-op for viewing original asset
       c.profile 'main-image' do |b|
         if b.web_safe_image?
           b.resize!(400, 300)
@@ -172,9 +178,9 @@ Here's the `config.ru` that made this possible:
 
     # Dummy app
     class MyApp
-      def call(env)
-        [ 200, {'Content-Type' => 'text/plain'}, env['REQUEST_PATH'] ]
-      end
+    	def call(env)
+    		[ 200, {'Content-Type' => 'text/plain'}, env['REQUEST_PATH'] ]
+    	end
     end
 
     run MyApp.new
