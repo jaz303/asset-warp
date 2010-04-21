@@ -17,7 +17,9 @@ context = AssetWarp::Context.new do |c|
   # Maps /a/files/foo.gif/profile-name to filesystem path
   # Note: you need to return a file:// URI
   # This example is insecure! For example only!
-  c.map 'file', :id => /^[^\/]+$/ do |asset_id, env|
+  c.map 'file', :id => /^[^\/]+$/,
+                :default_profile => false,
+                :only => %w(rounded-thumb main-image) do |asset_id, env|
     "file://" + File.expand_path(File.dirname(__FILE__)) + '/files/' + asset_id
   end
   

@@ -55,13 +55,15 @@ By default, Asset Warp requires that asset IDs be numeric and uses the `original
     # Set a very permissive ID restriction and default to 'small' profile
     c.map('avatars', '/avatars/:id', :id => /^[^\/]+$/,
                                      :default_profile => 'small')
+                                     
+(setting `:default_profile` to `false` will disable default profiles for this mapping, thereby requiring explicit profiles for incoming requests)
     
-For situations where simple string substitutions don't cut it, a block form is supported too. The block receives the asset ID and Rack environment as parameters and should return the URL of the original asset:
+For situations where simple string substitutions don't cut it, a block form is supported too. The block receives the asset ID and Rack environment as parameters and should return the URI of the original asset. Supported URI schemes are `file`, `http` and `https`:
 
     c.map('avatars') do |asset_id, env|
       "http://cdn.example.com/#{asset_id.upcase}"
     end
-
+    
 Profiles are the workhorses of Asset Warp, and are basically blocks that manipulate blobs. You define profiles with either the `profile` or `image_profile` methods; `image_profile()` will create a profile that operates only on images and returns a 404 for all other file types, whereas profiles created by `profile()` operates on all files:
 
     c.image_profile('thumb') do |blob|
@@ -72,6 +74,14 @@ Profiles are the workhorses of Asset Warp, and are basically blocks that manipul
     c.profile('original') do |blob|
       # do nothing
     end
+    
+You can restrict the profiles available to a particular asset mapping by passing the `:only` and `:except` options to `map()`:
+
+    # only allow 'thumb' profile
+    c.map('foo', '/foo/:id', :only => 'thumb')
+
+    # allow all profiles except 'column-1'
+    c.map('bar', '/bar/:id', :except => 'column-1')
 
 Finally, tell Rack to use the middleware:
 
@@ -148,7 +158,9 @@ Here's the `config.ru` that made this possible:
       # Maps /a/files/foo.gif/profile-name to filesystem path
       # Note: you need to return a file:// URI
       # This example is insecure! For example only!
-      c.map 'file', :id => /^[^\/]+$/ do |asset_id, env|
+      c.map 'file', :id => /^[^\/]+$/,
+                    :default_profile => false,
+                    :only => %w(rounded-thumb main-image) do |asset_id, env|
         "file://" + File.expand_path(File.dirname(__FILE__)) + '/files/' + asset_id
       end
   
@@ -199,7 +211,7 @@ Is this really a problem? Your application might not have many assets/profiles, 
 
 If it *is* a problem, there are a couple of possible solutions:
 
-  * Restrict profile availability based on asset source. For example, avatars might only be needed in 2 sizes, so deny all other profiles. This one is on the TODO list.
+  * Restrict profile availability based on asset source. For example, avatars might only be needed in 2 sizes, so deny all other profiles. This is possible using the `:only` and `:except` options to `context.map()`.
   * Consult a whitelist to decide whether a profile can be applied. This is slightly more involved, but the basic idea is to insert a database row for each valid asset/profile combination - you'd probably write a helper to do this transparently in your view. Before proxying a request, Asset Warp would check for the corresponding row in the database, bailing out if it wasn't found (possible implementation: guard blocks on sources which return a boolean).
 
 Known Issues
@@ -212,9 +224,7 @@ TODO
 
   * Gem release
   * PDF thumbnail generation
-  * Implement :only/:except rules for limiting profiles available to asset sources
   * Support loading context from file
-  * Allow disabling of default profile
   * Write some tests?
   
 Possible future improvements

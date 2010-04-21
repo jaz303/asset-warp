@@ -33,15 +33,18 @@ class AssetWarp
                 profile = source[:default_profile]
               end
               if @profiles.key?(profile)
-                if source[:target].is_a?(String)
-                  url = source[:target].gsub(':id', chunks[1])
-                else
-                  url = source[:target].call(chunks[1], env)
+                if (source[:only].empty? || source[:only].include?(profile)) &&
+                   (source[:except].empty? || !source[:except].include?(profile))
+                  if source[:target].is_a?(String)
+                    url = source[:target].gsub(':id', chunks[1])
+                  else
+                    url = source[:target].call(chunks[1], env)
+                  end
+                  if url.is_a?(String) && url[0..0] == '/'
+                    url = 'http://' + env['HTTP_HOST'] + url
+                  end
+                  return [url, profile]
                 end
-                if url.is_a?(String) && url[0..0] == '/'
-                  url = 'http://' + env['HTTP_HOST'] + url
-                end
-                return [url, profile]
               end
             end
           end
@@ -49,6 +52,11 @@ class AssetWarp
       end
       nil
     end
+    
+    DEFAULT_MAP_OPTIONS = {
+      :id => /^\d+$/,
+      :default_profile => 'original'
+    }.freeze
     
     # e.g. map('assets', '/assets/:id/:profile')
     #      map('user_images', 'http://foobar.com/:id')
@@ -60,9 +68,9 @@ class AssetWarp
         raise ArgumentError, "map expects string or block target and optional options hash"
       end
       options[:target] = target
-      options[:id] ||= /^\d+$/
-      options[:default_profile] ||= 'original'
-      @sources[asset_category] = options
+      options[:only] = [options[:only]].flatten.compact
+      options[:except] = [options[:except]].flatten.compact
+      @sources[asset_category] = DEFAULT_MAP_OPTIONS.merge(options)
     end
     
     class Profile
