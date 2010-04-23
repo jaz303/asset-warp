@@ -40,6 +40,12 @@ class AssetWarp
     
     # Image Mutations
     
+    # change format
+    def format(new_format)
+      image.format(new_format)
+      @content_type = MIME.mime_type_for_format(new_format)
+    end
+    
     # reduce, maintaining aspect ratio
     def reduce(width, height)
       image.geometry "#{width}x#{height}>"
@@ -86,8 +92,7 @@ class AssetWarp
           ")" +matte -compose src -composite
         CODE
       else
-        image.format 'png'
-        @content_type = 'image/png'
+        format 'png'
         command = <<-CODE
           "(" +clone -threshold -1
             -draw 'fill black polygon 0,0 0,#{radius} #{radius},0 fill white circle #{radius},#{radius} #{radius},0'

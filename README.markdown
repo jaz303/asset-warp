@@ -13,6 +13,7 @@ Requirements
 
   * A working ImageMagick installation
   * MiniMagick gem
+  * GhostScript required for PDF manipulation
 
 The Basics
 ----------
@@ -100,6 +101,7 @@ Profile blocks receive an instance of `AssetWarp::Blob` as their parameter. The 
 
 **Transformations:**
 
+  * `format(new_format)` - change format of image, works with PDFs
   * `reduce(width, height)` - reduce image, maintaining aspect-ratio; no-op if image is already smaller than target dimensions
   * `reduce!(width, height)` - as above, but does not maintain aspect-ratio
   * `resize(width, height)` - resize image, maintaining aspect-ratio
@@ -119,16 +121,19 @@ The repository contains a working test application in the `rack-test` directory.
     http://localhost:3000/a/img/berk.gif
     http://localhost:3000/a/img/clouds.jpg
     http://localhost:3000/a/img/test.txt
+    http://localhost:3000/a/img/rmagick.pdf
     
     # Original files (explicit profile)
     http://localhost:3000/a/img/berk.gif/original
     http://localhost:3000/a/img/clouds.jpg/original
     http://localhost:3000/a/img/test.txt/original
+    http://localhost:3000/a/img/rmagick.pdf/original
     
     # Thumbnails
     http://localhost:3000/a/img/berk.gif/rounded-thumb
     http://localhost:3000/a/img/clouds.jpg/rounded-thumb
     http://localhost:3000/a/img/test.txt/rounded-thumb
+    http://localhost:3000/a/img/rmagick.pdf/rounded-thumb
     
     # Main images
     http://localhost:3000/a/img/berk.gif/main-image
@@ -164,21 +169,20 @@ Here's the `config.ru` that made this possible:
         "file://" + File.expand_path(File.dirname(__FILE__)) + '/files/' + asset_id
       end
   
-      # Define an image profile
-      # Image profiles operate only on web-safe images
-      # If they encounter any other content types they will return a 404
-      c.image_profile 'rounded-thumb' do |b|
-        b.crop_resize(50, 50)
-        b.rounded_corners(15)
-      end
-  
       # Define a standard profile
       # Standard profiles operate on everything and, to be honest, aren't much use.
       # A single standard profile, 'original', is used internally as a no-op for viewing original asset
-      c.profile 'main-image' do |b|
-        if b.web_safe_image?
-          b.resize!(400, 300)
-        end
+      c.profile 'rounded-thumb' do |b|
+        b.format 'png' if b.pdf?
+        b.crop_resize(100, 100)
+        b.rounded_corners(15)
+      end
+  
+      # Define an image profile
+      # Image profiles operate only on web-safe images
+      # If they encounter any other content types they will return a 404
+      c.image_profile 'main-image' do |b|
+        b.resize!(400, 300)
       end
   
     end
@@ -223,7 +227,6 @@ TODO
 ----
 
   * Gem release
-  * PDF thumbnail generation
   * Support loading context from file
   * Write some tests?
   

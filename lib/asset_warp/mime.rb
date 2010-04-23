@@ -1,5 +1,12 @@
 class AssetWarp
   module MIME
+    FORMAT_MIME_MAP = {
+      'jpg'     => 'image/jpeg',
+      'gif'     => 'image/gif',
+      'png'     => 'image/png',
+      'pdf'     => 'application/pdf'
+    }
+    
     WEB_SAFE_IMAGE_MAP = {
       'image/jpeg'  => 'jpg',
       'image/pjpeg' => 'jpg',
@@ -13,6 +20,10 @@ class AssetWarp
       :pdf => [PDF],
       :web_safe_image => WEB_SAFE_IMAGE_MAP.keys
     }
+    
+    def self.mime_type_for_format(format)
+      FORMAT_MIME_MAP[format]
+    end
     
     def self.expand_content_class(symbol)
       CONTENT_CLASSES[symbol] || []

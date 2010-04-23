@@ -103,21 +103,14 @@ class AssetWarp
       end
     end
     
-    def profile(name, &block)
-      add_profile(name, Profile.new(block))
+    def profile(name, *restrictions, &block)
+      name = name.to_s
+      raise ArgumentError, "duplicate profile '#{name}'" if @profiles.key?(name)
+      @profiles[name] = Profile.new(block, *restrictions)
     end
     
     def image_profile(name, &block)
-      add_profile(name, Profile.new(block, :web_safe_image))
+      profile(name, :web_safe_image, &block)
     end
-    
-  private
-  
-    def add_profile(name, profile)
-      name = name.to_s
-      raise ArgumentError, "duplicate profile '#{name}'" if @profiles.key?(name)
-      @profiles[name] = profile
-    end
-    
   end
 end

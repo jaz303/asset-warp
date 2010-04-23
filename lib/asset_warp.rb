@@ -7,12 +7,15 @@ MiniMagick::Image.class_eval do
   def convert(*args)
     args.unshift(@path)
     args.push(@path)
-    
+    raw_convert(*args)
+  end
+  
+  def raw_convert(*args)
     command = "convert #{args.join(' ')}"
     output = `#{command}`
     
     if $? != 0
-      raise MiniMagickError, "ImageMagick command (#{command}) failed: Error Given #{$?}"
+      raise ::MiniMagick::MiniMagickError, "ImageMagick command (#{command}) failed: Error Given #{$?}"
     else
       output
     end
