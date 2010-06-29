@@ -53,6 +53,8 @@ class AssetWarp
       nil
     end
     
+    ANY_ID = /^[^\/]+$/
+    
     DEFAULT_MAP_OPTIONS = {
       :id => /^\d+$/,
       :default_profile => 'original'
@@ -70,6 +72,7 @@ class AssetWarp
       options[:target] = target
       options[:only] = [options[:only]].flatten.compact
       options[:except] = [options[:except]].flatten.compact
+      options[:id] = ANY_ID if options[:id] === true
       @sources[asset_category] = DEFAULT_MAP_OPTIONS.merge(options)
     end
     
