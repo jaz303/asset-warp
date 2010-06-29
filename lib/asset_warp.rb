@@ -35,12 +35,24 @@ class AssetWarp
         
         case asset.scheme
         when 'http', 'https'
-          begin
-            res = Net::HTTP.start(asset.host, asset.port) { |http| http.get(asset.path) }
-            raise unless Net::HTTPSuccess === res
-            data, content_type = res.body, res['Content-Type']
-          rescue StandardError
-            return [502, {'Content-Type' => 'text/plain'}, 'Bad Gateway']
+          # don't do sub-request for internal proxying, just rewrite env and
+          # let it pass through
+          if asset.host == env['SERVER_NAME'] && asset.port == env['SERVER_PORT'].to_i
+            env['REQUEST_PATH'] = asset.path
+            env['PATH_INFO']    = asset.path 
+            env['REQUEST_URI']  = asset.request_uri
+            env['QUERY_STRING'] = asset.query
+            res = @app.call(env)
+            return res unless res.first == 200
+            data, content_type = res[2], res[1]['Content-Type']
+          else
+            begin
+              res = Net::HTTP.start(asset.host, asset.port) { |http| http.get(asset.path) }
+              raise unless Net::HTTPSuccess === res
+              data, content_type = res.body, res['Content-Type']
+            rescue StandardError
+              return [502, {'Content-Type' => 'text/plain'}, 'Bad Gateway']
+            end
           end
         when 'file'
           data = File.read(asset.path)
@@ -56,7 +68,7 @@ class AssetWarp
         
         blob = Blob.new(data, content_type)
         if @context[profile_name].call(blob)
-          [200, {'Content-Type' => blob.content_type}, blob.data]
+          [200, {'Content-Type' => blob.content_type, 'Content-Length' => blob.data.length.to_s}, blob.data]
         else
           [404, {'Content-Type' => 'text/plain'}, 'Not Found']
         end
